@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Instant Ledger</string>
+    <string name="today">Today</string>
+    <string name="insights">Insights</string>
+    <string name="projects">Projects</string>
+    <string name="add_transaction">Add Transaction</string>
+    <string name="amount">Amount</string>
+    <string name="merchant">Merchant</string>
+    <string name="category">Category</string>
+    <string name="payment_mode">Payment Mode</string>
+    <string name="date_time">Date &amp; Time</string>
+    <string name="notes">Notes</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="main">Main</string>
+    <string name="work">Work</string>
+    <string name="ignore">Ignore</string>
+    <string name="auto_captured">Auto</string>
+    <string name="user_entered">Manual</string>
+    <string name="user_modified">Edited</string>
+    <string name="overlay_permission_required">Overlay permission is required to show transaction notifications</string>
+    <string name="sms_permission_required">SMS permission is required to capture transactions automatically</string>
+    <string name="biometric_required">Biometric authentication is required to secure your data</string>
+</resources>

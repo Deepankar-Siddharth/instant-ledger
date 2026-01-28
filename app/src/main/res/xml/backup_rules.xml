@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude encrypted database from backup -->
+    <exclude domain="database" path="instant_ledger.db" />
+    <exclude domain="database" path="instant_ledger.db-journal" />
+    <exclude domain="database" path="instant_ledger.db-wal" />
+    <exclude domain="database" path="instant_ledger.db-shm" />
+</full-backup-content>
