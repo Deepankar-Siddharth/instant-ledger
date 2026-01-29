@@ -16,41 +16,43 @@ data class ParsedTransaction(
 class SMSParser {
     
     companion object {
-        // Common bank SMS patterns - Broader and more flexible
+        // Amount patterns: currency (₹, Rs, INR), amounts, and transaction keywords (credited, debited, received, paid, refund, transfer, txn)
         private val AMOUNT_PATTERNS = listOf(
-            // Rs. 500, Rs 500, Rs.500 (with optional space and comma)
             Pattern.compile("Rs\\.?\\s?([0-9,.]+)", Pattern.CASE_INSENSITIVE),
-            // INR 500, INR500
             Pattern.compile("INR\\s?([0-9,.]+)", Pattern.CASE_INSENSITIVE),
-            // ₹ 500, ₹500
             Pattern.compile("₹\\s?([0-9,.]+)", Pattern.CASE_INSENSITIVE),
-            // Amount before currency: 500 Rs, 500 INR
             Pattern.compile("([0-9,.]+)\\s*(?:Rs\\.?|INR|₹)", Pattern.CASE_INSENSITIVE),
-            // debited/credited with amount
-            Pattern.compile("(?:debited|credited|paid|spent)\\s*(?:Rs\\.?|INR|₹)?\\s*([0-9,.]+)", Pattern.CASE_INSENSITIVE),
-            // Amount before debited/credited
-            Pattern.compile("([0-9,.]+)\\s*(?:debited|credited|paid|spent)", Pattern.CASE_INSENSITIVE),
-            // Generic number patterns (fallback)
+            Pattern.compile("(?:debited|credited|paid|spent|received|refund|transfer)\\s*(?:of|for)?\\s*(?:Rs\\.?|INR|₹)?\\s*([0-9,.]+)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("([0-9,.]+)\\s*(?:debited|credited|paid|spent|received|refund)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(?:transfer|txn|txns?)\\s*(?:of|for)?\\s*(?:Rs\\.?|INR|₹)?\\s*([0-9,.]+)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("([0-9,.]+)\\s*(?:transfer|txn)", Pattern.CASE_INSENSITIVE),
             Pattern.compile("(?:Rs\\.?|INR|₹)\\s*([\\d,]+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE),
             Pattern.compile("([\\d,]+(?:\\.\\d{2})?)\\s*(?:Rs\\.?|INR|₹)", Pattern.CASE_INSENSITIVE)
         )
         
         private val MERCHANT_PATTERNS = listOf(
-            Pattern.compile("(?:at|from|to|via)\\s+([A-Z][A-Z\\s&]+)", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(?:merchant|vendor|payee):\\s*([A-Z][A-Z\\s&]+)", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("UPI\\s+([A-Z][A-Z\\s&]+)", Pattern.CASE_INSENSITIVE)
+            Pattern.compile("(?:at|from|to|via)\\s+([A-Za-z0-9][A-Za-z0-9\\s&.-]+)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(?:merchant|vendor|payee):\\s*([A-Za-z0-9][A-Za-z0-9\\s&.-]+)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("UPI\\s+([A-Za-z0-9][A-Za-z0-9\\s&.-]+)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(?:to|from)\\s+([A-Za-z0-9][A-Za-z0-9\\s&.-]+)\\s+(?:for|of)", Pattern.CASE_INSENSITIVE)
         )
         
         private val DEBIT_KEYWORDS = listOf(
-            "debited", "spent", "paid", "withdrawn", "deducted", "charged"
+            "debited", "spent", "paid", "withdrawn", "deducted", "charged", "purchase"
         )
         
         private val CREDIT_KEYWORDS = listOf(
-            "credited", "received", "deposited", "refunded", "reversed"
+            "credited", "received", "deposited", "refunded", "reversed", "refund"
+        )
+        
+        /** Any message containing amount + one of these is treated as money-related for capture */
+        private val MONEY_KEYWORDS = listOf(
+            "credited", "debited", "received", "paid", "refund", "transfer", "txn", "transaction",
+            "neft", "imps", "rtgs", "upi", "balance", "account"
         )
         
         private val UPI_KEYWORDS = listOf(
-            "upi", "gpay", "phonepe", "paytm", "bhim"
+            "upi", "gpay", "phonepe", "paytm", "bhim", "wallet"
         )
         
         private val CARD_KEYWORDS = listOf(
@@ -58,7 +60,7 @@ class SMSParser {
         )
         
         private val BANK_KEYWORDS = listOf(
-            "neft", "imps", "rtgs", "transfer", "bank"
+            "neft", "imps", "rtgs", "transfer", "bank", "a/c", "account"
         )
         
         // Bank-specific patterns
@@ -101,12 +103,12 @@ class SMSParser {
         // Extract account type
         val accountType = extractAccountType(messageBody)
         
-        // Calculate confidence score
         val confidenceScore = calculateConfidenceScore(
-            amount != null,
-            merchant != null,
-            transactionType != null,
-            paymentMode != null
+            hasAmount = amount != null,
+            hasMerchant = merchant != null,
+            hasTransactionType = transactionType != null,
+            hasPaymentMode = paymentMode != null,
+            hasMoneyKeyword = hasMoneyKeyword(messageBody)
         )
         
         return ParsedTransaction(
@@ -170,15 +172,19 @@ class SMSParser {
     
     private fun determineTransactionType(message: String): TransactionType? {
         val lowerMessage = message.lowercase()
-        
         val debitCount = DEBIT_KEYWORDS.count { lowerMessage.contains(it) }
         val creditCount = CREDIT_KEYWORDS.count { lowerMessage.contains(it) }
-        
         return when {
             debitCount > creditCount -> TransactionType.DEBIT
             creditCount > debitCount -> TransactionType.CREDIT
             else -> null
         }
+    }
+    
+    /** True if message contains any generic money-movement keyword (for broader capture). */
+    private fun hasMoneyKeyword(message: String): Boolean {
+        val lower = message.lowercase()
+        return MONEY_KEYWORDS.any { lower.contains(it) }
     }
     
     private fun determinePaymentMode(message: String): PaymentMode? {
@@ -219,15 +225,16 @@ class SMSParser {
         hasAmount: Boolean,
         hasMerchant: Boolean,
         hasTransactionType: Boolean,
-        hasPaymentMode: Boolean
+        hasPaymentMode: Boolean,
+        hasMoneyKeyword: Boolean = false
     ): Float {
         var score = 0.0f
-        
         if (hasAmount) score += 0.4f
         if (hasMerchant) score += 0.3f
         if (hasTransactionType) score += 0.2f
         if (hasPaymentMode) score += 0.1f
-        
+        // Broader capture: amount + any money keyword still counts as likely transaction
+        if (hasAmount && hasMoneyKeyword && score < 0.5f) score = 0.5f
         return score.coerceIn(0f, 1f)
     }
 }

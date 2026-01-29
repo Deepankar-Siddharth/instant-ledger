@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.instantledger.data.model.EntryType
 import com.instantledger.data.model.Transaction
 import com.instantledger.data.repository.MerchantRepository
+import com.instantledger.data.preferences.CategoryIcons
 import com.instantledger.data.preferences.CategoryManager
 import com.instantledger.data.preferences.CategoryMetadata
 import androidx.compose.runtime.remember
@@ -91,10 +92,10 @@ fun TransactionCard(
         EntryType.USER_MODIFIED -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
     }
     
-    // Category icon/emoji and color (derived ONLY from category, never merchant)
-    val metadata = categoryMetadata // Local variable for smart casting
-    val categoryIcon = metadata?.getDisplayIcon() ?: "📦" // Neutral placeholder if no category
-    val categoryIsEmoji = metadata?.isEmoji ?: true
+    // Category icon (predefined only) and color (derived ONLY from category, never merchant)
+    val metadata = categoryMetadata
+    val categoryIconKey = metadata?.getResolvedIconKey() ?: CategoryIcons.DEFAULT_ICON_KEY
+    val categoryIconVector = CategoryIcons.getImageVector(categoryIconKey)
     val categoryColorValue = metadata?.color
     val categoryColor = categoryColorValue?.let { Color(it) } 
         ?: MaterialTheme.colorScheme.outlineVariant // Neutral color if no category
@@ -137,137 +138,135 @@ fun TransactionCard(
                 .fillMaxWidth()
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
-            // Category Icon/Emoji (ALWAYS shown if category exists, derived ONLY from category)
-            // Show neutral placeholder if no category
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .background(
-                        color = categoryColor.copy(alpha = 0.2f),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
+            // Left: icon + content column
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top
             ) {
-                if (categoryIsEmoji) {
-                    Text(
-                        text = categoryIcon,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                } else {
-                    // For Material icons, show emoji representation
-                    // In a full implementation, you'd map icon names to Icon vectors
-                    Text(
-                        text = categoryIcon,
-                        style = MaterialTheme.typography.headlineMedium
+                // Category icon (compact)
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            color = categoryColor.copy(alpha = 0.2f),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = categoryIconVector,
+                        contentDescription = transaction.category,
+                        modifier = Modifier.size(20.dp),
+                        tint = categoryColor
                     )
                 }
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Refined AssistChip with lower opacity
-                    AssistChip(
-                        onClick = { },
-                        label = { 
-                            Text(
-                                text = sourceLabel,
-                                style = MaterialTheme.typography.labelSmall
-                            ) 
-                        },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = sourceColor,
-                            labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        ),
-                        modifier = Modifier.height(24.dp)
-                    )
-
-                    // Group trip indicator
-                    if (transaction.tripId != null) {
+                    // Row 1: Source chip only (category moved below)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
                         AssistChip(
                             onClick = { },
                             label = {
                                 Text(
-                                    text = "👥 Group",
+                                    text = sourceLabel,
                                     style = MaterialTheme.typography.labelSmall
                                 )
                             },
                             colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f),
-                                labelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                containerColor = sourceColor,
+                                labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                             ),
                             modifier = Modifier.height(24.dp)
                         )
+                        if (transaction.tripId != null) {
+                            AssistChip(
+                                onClick = { },
+                                label = {
+                                    Text(
+                                        text = "Group",
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                },
+                                colors = AssistChipDefaults.assistChipColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f),
+                                    labelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                ),
+                                modifier = Modifier.height(24.dp)
+                            )
+                        }
                     }
-                    
-                    // Category name (text-only, no visual control)
+                    // Row 2: Category label (secondary: small font, muted, optional icon)
                     if (transaction.category != null) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = categoryIconVector,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = categoryColor.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                text = transaction.category,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                            )
+                        }
+                    }
+                    // Row 3: Merchant / description
+                    Text(
+                        text = displayText,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                    // Row 4 (optional): Notes
+                    if (transaction.notes != null) {
                         Text(
-                            text = transaction.category,
+                            text = transaction.notes,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Merchant name (text-only, always shown)
-                Text(
-                    text = displayText,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                if (transaction.notes != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = transaction.notes,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
             }
-            
+            // Right: Amount + actions
             Column(
-                horizontalAlignment = Alignment.End
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Dynamic Typography: Green for Credit, Red for Debit, extra bold for visibility
                 val isDebit = transaction.transactionType == com.instantledger.data.model.TransactionType.DEBIT
                 val amountColor = if (isDebit) {
                     com.instantledger.ui.theme.TransactionColors.debit()
                 } else {
                     com.instantledger.ui.theme.TransactionColors.credit()
                 }
-                
                 Text(
                     text = if (isDebit) {
                         "-₹${String.format("%.2f", transaction.amount)}"
                     } else {
                         "+₹${String.format("%.2f", transaction.amount)}"
                     },
-                    style = MaterialTheme.typography.headlineMedium, // Increased from headlineSmall
-                    fontWeight = FontWeight.ExtraBold, // Extra bold for maximum visibility
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
                     color = amountColor
                 )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     TextButton(onClick = { onEdit(transaction) }) {
-                        Text("Edit")
+                        Text("Edit", style = MaterialTheme.typography.labelLarge)
                     }
                     TextButton(onClick = { onDelete(transaction) }) {
-                        Text("Delete")
+                        Text("Delete", style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }

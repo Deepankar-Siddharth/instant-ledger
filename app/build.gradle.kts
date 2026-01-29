@@ -5,6 +5,17 @@ plugins {
     id("com.google.dagger.hilt.android")
 }
 
+// Load keystore properties for release signing
+import java.util.Properties
+import java.io.FileInputStream
+
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        FileInputStream(keystorePropertiesFile).use { load(it) }
+    }
+}
+
 android {
     namespace = "com.instantledger"
     compileSdk = 34
@@ -13,8 +24,8 @@ android {
         applicationId = "com.instantledger"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "0.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -27,17 +38,44 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            // Only configure signing if keystore.properties exists and is valid
+            if (keystorePropertiesFile.exists()) {
+                val storeFileProperty = keystoreProperties["storeFile"] as String?
+                if (storeFileProperty != null && !storeFileProperty.contains("YOUR_KEYSTORE")) {
+                    val keystoreFile = if (storeFileProperty.startsWith("/")) {
+                        file(storeFileProperty)
+                    } else {
+                        rootProject.file(storeFileProperty)
+                    }
+                    
+                    if (keystoreFile.exists()) {
+                        storeFile = keystoreFile
+                        storePassword = keystoreProperties["storePassword"] as String? ?: ""
+                        keyAlias = keystoreProperties["keyAlias"] as String? ?: ""
+                        keyPassword = keystoreProperties["keyPassword"] as String? ?: ""
+                    }
+                }
+            }
+        }
+    }
+
     buildTypes {
         debug {
             // Ensure SQLCipher is included in debug builds
             isMinifyEnabled = false
+            applicationIdSuffix = ".debug"
         }
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Attach signing config if available
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     

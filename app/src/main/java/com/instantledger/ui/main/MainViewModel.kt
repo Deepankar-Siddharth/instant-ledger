@@ -17,17 +17,16 @@ import java.util.Calendar
 import javax.inject.Inject
 
 /**
- * Filter state for global transaction filtering across all tabs
+ * Filter state for global transaction filtering across all tabs.
+ * No debit/credit filter; calculations use raw amounts (incoming = sum(amount>0), outgoing = sum(amount<0)).
  */
 data class FilterState(
     val approvalStatus: ApprovalStatusFilter? = null, // null = all, PENDING = only pending, APPROVED = only approved
-    val transactionType: TransactionType? = null, // null = all, DEBIT = debits only, CREDIT = credits only
     val selectedCategories: Set<String> = emptySet(), // Empty = all categories, non-empty = only selected
     val paymentModes: Set<PaymentMode> = emptySet() // Empty = all modes, non-empty = only selected
 ) {
     fun hasActiveFilters(): Boolean {
         return approvalStatus != null ||
-                transactionType != null ||
                 selectedCategories.isNotEmpty() ||
                 paymentModes.isNotEmpty()
     }
@@ -158,11 +157,6 @@ class MainViewModel @Inject constructor(
                 }
             }
 
-            // Transaction type filter
-            filters.transactionType?.let { type ->
-                dataset = dataset.filter { it.transactionType == type }
-            }
-
             // Category filter
             if (filters.selectedCategories.isNotEmpty()) {
                 dataset = dataset.filter { tx ->
@@ -176,7 +170,7 @@ class MainViewModel @Inject constructor(
                 dataset = dataset.filter { tx -> filters.paymentModes.contains(tx.paymentMode) }
             }
 
-            // Strict numeric totals
+            // Totals from raw stored amounts: outgoing = sum(debit amounts), incoming = sum(credit amounts)
             val totalDebit = dataset
                 .filter { it.transactionType == TransactionType.DEBIT }
                 .sumOf { it.amount }

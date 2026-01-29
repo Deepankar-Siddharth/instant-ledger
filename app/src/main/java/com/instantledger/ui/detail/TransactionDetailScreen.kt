@@ -17,6 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.instantledger.data.model.*
+import com.instantledger.data.preferences.CategoryIcons
+import com.instantledger.data.preferences.CategoryManager
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -346,9 +349,19 @@ private fun InformationGrid(
         
         Divider()
         
-        // Category
+        // Category (with predefined icon)
+        val context = LocalContext.current
+        val categoryManager = remember(context) { CategoryManager(context) }
+        val categoryMetadata = remember(transaction.category, categoryManager) {
+            if (!transaction.category.isNullOrBlank()) {
+                categoryManager.getCategoryMetadata(transaction.category)
+            } else null
+        }
+        val categoryIconVector = CategoryIcons.getImageVector(
+            categoryMetadata?.getResolvedIconKey() ?: CategoryIcons.DEFAULT_ICON_KEY
+        )
         InfoRow(
-            icon = Icons.Default.Category,
+            icon = categoryIconVector,
             label = "Category",
             value = transaction.category ?: "Uncategorized"
         )

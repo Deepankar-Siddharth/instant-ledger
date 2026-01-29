@@ -3,6 +3,8 @@ package com.instantledger.ui.dashboard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -24,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.instantledger.data.preferences.CategoryIcons
 import com.instantledger.data.model.Transaction
 import com.instantledger.data.model.EntryType
 import com.instantledger.data.model.TransactionType
@@ -85,25 +88,16 @@ fun DashboardScreen(
     // Apply global filters
     val filteredTransactions = remember(baseFilteredTransactions, filterState) {
         baseFilteredTransactions.filter { transaction ->
-            // Approval status filter
             val approvalMatch = when (filterState.approvalStatus) {
                 com.instantledger.ui.main.ApprovalStatusFilter.PENDING -> !transaction.isApproved
                 com.instantledger.ui.main.ApprovalStatusFilter.APPROVED -> transaction.isApproved
-                null -> true // Show all
+                null -> true
             }
-            
-            // Transaction type filter
-            val typeMatch = filterState.transactionType == null || transaction.transactionType == filterState.transactionType
-            
-            // Category filter (multi-select)
-            val categoryMatch = filterState.selectedCategories.isEmpty() || 
+            val categoryMatch = filterState.selectedCategories.isEmpty() ||
                     (transaction.category != null && filterState.selectedCategories.contains(transaction.category))
-            
-            // Payment mode filter (multi-select)
-            val paymentModeMatch = filterState.paymentModes.isEmpty() || 
+            val paymentModeMatch = filterState.paymentModes.isEmpty() ||
                     filterState.paymentModes.contains(transaction.paymentMode)
-            
-            approvalMatch && typeMatch && categoryMatch && paymentModeMatch
+            approvalMatch && categoryMatch && paymentModeMatch
         }
     }
     
@@ -266,10 +260,9 @@ fun FilterBottomSheet(
     onFilterStateChange: (com.instantledger.ui.main.FilterState) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scrollState = rememberScrollState()
     
-    // Local state for editing filters
     var localApprovalStatus by remember { mutableStateOf(filterState.approvalStatus) }
-    var localTransactionType by remember { mutableStateOf(filterState.transactionType) }
     var localSelectedCategories by remember { mutableStateOf(filterState.selectedCategories) }
     var localPaymentModes by remember { mutableStateOf(filterState.paymentModes) }
     
@@ -280,138 +273,100 @@ fun FilterBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .fillMaxHeight()
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // Scrollable filter options (independent scroll)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                Text(
-                    text = "Filter Transactions",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Filter Transactions",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 
-                TextButton(onClick = {
-                    localApprovalStatus = null
-                    localTransactionType = null
-                    localSelectedCategories = emptySet()
-                    localPaymentModes = emptySet()
-                    onFilterStateChange(com.instantledger.ui.main.FilterState())
-                }) {
-                    Text("Clear All")
-                }
-            }
-            
-            Divider()
-            
-            // Approval Status Filter
-            Text(
-                text = "Status",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                com.instantledger.ui.main.ApprovalStatusFilter.values().forEach { status ->
-                    FilterChip(
-                        selected = localApprovalStatus == status,
-                        onClick = {
-                            localApprovalStatus = if (localApprovalStatus == status) null else status
-                        },
-                        label = {
-                            Text(
-                                if (status == com.instantledger.ui.main.ApprovalStatusFilter.PENDING) "Pending" else "Approved"
-                            )
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-            
-            // Transaction Type Filter
-            Text(
-                text = "Type",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TransactionType.values().forEach { type ->
-                    FilterChip(
-                        selected = localTransactionType == type,
-                        onClick = {
-                            localTransactionType = if (localTransactionType == type) null else type
-                        },
-                        label = {
-                            Text(
-                                if (type == TransactionType.DEBIT) "Outgoing" else "Incoming"
-                            )
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-            
-            // Payment Mode Filter
-            Text(
-                text = "Payment Mode",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                PaymentMode.values().forEach { mode ->
-                    val isSelected = localPaymentModes.contains(mode)
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = {
-                            localPaymentModes = if (isSelected) {
-                                localPaymentModes - mode
-                            } else {
-                                localPaymentModes + mode
-                            }
-                        },
-                        label = {
-                            Text(
-                                when (mode) {
-                                    PaymentMode.CASH -> "💵 Cash"
-                                    PaymentMode.UPI -> "📱 UPI"
-                                    PaymentMode.CARD -> "💳 Card"
-                                    PaymentMode.BANK -> "🏛️ Bank"
-                                }
-                            )
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-            
-            // Category Filter (Multi-select)
-            if (availableCategories.isNotEmpty()) {
+                Divider()
+                
+                // Approval Status (Pending / Approved / All)
                 Text(
-                    text = "Categories",
+                    text = "Status",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
-                
-                LazyColumn(
-                    modifier = Modifier.heightIn(max = 200.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(availableCategories) { category ->
+                    com.instantledger.ui.main.ApprovalStatusFilter.values().forEach { status ->
+                        FilterChip(
+                            selected = localApprovalStatus == status,
+                            onClick = {
+                                localApprovalStatus = if (localApprovalStatus == status) null else status
+                            },
+                            label = {
+                                Text(
+                                    if (status == com.instantledger.ui.main.ApprovalStatusFilter.PENDING) "Pending" else "Approved"
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                
+                // Payment Mode
+                Text(
+                    text = "Payment Mode",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PaymentMode.values().forEach { mode ->
+                        val isSelected = localPaymentModes.contains(mode)
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                localPaymentModes = if (isSelected) {
+                                    localPaymentModes - mode
+                                } else {
+                                    localPaymentModes + mode
+                                }
+                            },
+                            label = {
+                                Text(
+                                    when (mode) {
+                                        PaymentMode.CASH -> "Cash"
+                                        PaymentMode.UPI -> "UPI"
+                                        PaymentMode.CARD -> "Card"
+                                        PaymentMode.BANK -> "Bank"
+                                    }
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                
+                // Category (multi-select)
+                if (availableCategories.isNotEmpty()) {
+                    Text(
+                        text = "Categories",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    availableCategories.forEach { category ->
                         val isSelected = localSelectedCategories.contains(category)
                         FilterChip(
                             selected = isSelected,
@@ -429,23 +384,42 @@ fun FilterBottomSheet(
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Divider()
             
-            // Apply Button
-            Button(
-                onClick = {
-                    val newFilterState = com.instantledger.ui.main.FilterState(
-                        approvalStatus = localApprovalStatus,
-                        transactionType = localTransactionType,
-                        selectedCategories = localSelectedCategories,
-                        paymentModes = localPaymentModes
-                    )
-                    onFilterStateChange(newFilterState)
-                    onDismiss()
-                },
-                modifier = Modifier.fillMaxWidth()
+            // Sticky bottom action row (always visible; not clipped by nav bar)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Apply Filters")
+                OutlinedButton(
+                    onClick = {
+                        localApprovalStatus = null
+                        localSelectedCategories = emptySet()
+                        localPaymentModes = emptySet()
+                        onFilterStateChange(com.instantledger.ui.main.FilterState())
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Clear all")
+                }
+                Button(
+                    onClick = {
+                        val newFilterState = com.instantledger.ui.main.FilterState(
+                            approvalStatus = localApprovalStatus,
+                            selectedCategories = localSelectedCategories,
+                            paymentModes = localPaymentModes
+                        )
+                        onFilterStateChange(newFilterState)
+                        onDismiss()
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Apply filters")
+                }
             }
         }
     }
@@ -530,13 +504,10 @@ private fun PendingTransactionCard(
         it.isNotBlank() && it != "Unknown" 
     } ?: "Unknown"
     
-    // Pending transactions have no category, so show neutral placeholder
-    // Merchant names are text-only and never control visuals
-    val displayText = finalDisplayName // Always show merchant name (text-only)
-    
-    // Neutral placeholder icon and color for uncategorized transactions
-    val neutralIcon = "📦"
+    // Pending transactions have no category; use default "other" icon
+    val displayText = finalDisplayName
     val neutralBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+    val defaultIconVector = CategoryIcons.getImageVector(CategoryIcons.DEFAULT_ICON_KEY)
 
     Card(
         modifier = Modifier
@@ -558,32 +529,32 @@ private fun PendingTransactionCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Row 1: Neutral placeholder icon + Source chip + amount
+            // Row 1: Icon + Source chip (left) | Amount (right) — same order as TransactionCard
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Neutral placeholder icon (no category = pending)
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(40.dp)
                             .background(
                                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                                 shape = CircleShape
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = neutralIcon,
-                            style = MaterialTheme.typography.headlineMedium
+                        Icon(
+                            imageVector = defaultIconVector,
+                            contentDescription = "Uncategorized",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    
                     AssistChip(
                         onClick = { },
                         label = {
@@ -599,7 +570,6 @@ private fun PendingTransactionCard(
                         modifier = Modifier.height(24.dp)
                     )
                 }
-
                 Text(
                     text = if (isDebit) {
                         "-₹${String.format("%.2f", transaction.amount)}"
@@ -611,16 +581,14 @@ private fun PendingTransactionCard(
                     color = amountColor
                 )
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Row 2: Merchant name (text-only, no visual control)
+            Spacer(modifier = Modifier.height(4.dp))
+            // Row 2: (No category for pending)
+            // Row 3: Merchant
             Text(
                 text = displayText,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium
             )
-
             if (transaction.notes != null) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -629,7 +597,6 @@ private fun PendingTransactionCard(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
-
             Spacer(modifier = Modifier.height(8.dp))
 
             // Row 3: Quick actions – Main, Work, Ignore (tinted circular icon buttons)

@@ -54,3 +54,53 @@
 # Keep data classes
 -keep class com.instantledger.data.model.** { *; }
 -keep class com.instantledger.data.entities.** { *; }
+
+# Keep Room DAOs
+-keep class com.instantledger.data.database.dao.** { *; }
+
+# Keep Room entities
+-keep @androidx.room.Entity class com.instantledger.data.database.entities.** { *; }
+
+# Keep Compose classes
+-keep class androidx.compose.** { *; }
+-dontwarn androidx.compose.**
+
+# Keep WorkManager
+-keep class androidx.work.** { *; }
+-dontwarn androidx.work.**
+
+# Keep Biometric classes
+-keep class androidx.biometric.** { *; }
+-dontwarn androidx.biometric.**
+
+# Keep Security Crypto classes
+-keep class androidx.security.crypto.** { *; }
+-dontwarn androidx.security.crypto.**
+
+# Keep Hilt ViewModel
+-keep class com.instantledger.ui.**ViewModel { *; }
+-keep class com.instantledger.ui.**ViewModel$* { *; }
+
+# Keep application class
+-keep class com.instantledger.InstantLedgerApplication { *; }
+
+# Keep all Composables (needed for reflection)
+-keep @androidx.compose.runtime.Composable class * { *; }
+
+# Keep Parcelable implementations
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final ** CREATOR;
+}
+
+# Google Errorprone annotations (used by Tink/EncryptedSharedPreferences)
+# These are compile-time annotations and not needed at runtime
+-dontwarn com.google.errorprone.annotations.**
+-keep class com.google.errorprone.annotations.** { *; }
+
+# Tink (used by EncryptedSharedPreferences)
+-keep class com.google.crypto.tink.** { *; }
+-dontwarn com.google.crypto.tink.**
+
+# Keep Tink Key classes
+-keep class com.google.crypto.tink.proto.** { *; }
+-keep class com.google.crypto.tink.aead.** { *; }

@@ -5,6 +5,38 @@ All notable changes to Instant Ledger will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-01-29
+
+### Fixed
+- **Stability:** App no longer crashes when SMS arrives while the app is open. SMS handling is fully off the main thread.
+- **Filter UI:** Filter bottom sheet Apply/Clear buttons are always visible and no longer clipped by system navigation.
+- **Transaction cards:** Layout adjusted for better information density; source chip on top, category below, merchant/description clearly separated.
+
+### Changed
+- **SMS handling:** `SMSReceiver` no longer touches the database or UI. It only extracts message text, combines multipart SMS, and enqueues `SmsProcessWorker` for all parsing and DB writes.
+- **SMS parsing:** Stricter validation gate—only real money movement messages (amount + transaction verb) are captured. OTPs, balance-only alerts, failed/declined transactions, and promotional messages are excluded. No auto-ignore; valid detections are saved as pending for user approval.
+- **Duplicate/race safety:** Normalized hash check before insert; multipart and duplicate SMS are guarded. Ignored transactions are persisted by hash so the same SMS is not re-offered after user ignores it.
+- **Approval flow:** All overlay / draw-over-app code removed. New auto-captured transactions are saved as pending and trigger a notification; multiple pending items use a grouped reminder notification.
+- **Filters:** Debit/credit (incoming/outgoing) filter options removed. Filters now only include category, payment mode, and approval status. Totals remain purely numeric: incoming = sum(amount > 0), outgoing = sum(amount < 0).
+- **Category icons:** Custom emoji support removed. Categories use a predefined icon set only; icons are category-based and consistent. Old emoji metadata is migrated to icon keys on read.
+- **Transaction card:** Source chip (Auto / Manual / Edited) on top; category displayed below; merchant/description and optional notes follow. Light theme only.
+
+### Added
+- **SmsProcessWorker:** Dedicated WorkManager worker for SMS parsing, validation, duplicate/hash check, DB insert, and notifications—all off the main thread.
+- **SMSValidationGate:** Ensures only messages with amount and transaction verb (credited, debited, paid, received, refund, transfer) are accepted; excludes OTP, balance-only, failed, and promo patterns.
+- **IgnoredHashesStore:** Persists hashes of user-ignored messages so the same SMS is not re-captured.
+- **CategoryIcons:** Predefined Material icon set for categories (e.g. home, work, shopping, other) with consistent rendering in cards and lists.
+
+### Removed
+- Overlay / draw-over-other-apps permission and related UI flow.
+- Debit/credit toggles from the filter bottom sheet.
+- Custom emoji support for category icons.
+
+### Technical
+- Minimum/target SDK unchanged (API 26–34). No database schema changes. Package name unchanged. No cloud sync or accounts; no auto-approval; no silent discard of valid money transactions.
+
+---
+
 ## [0.1.0] - 2024-01-XX
 
 ### Added

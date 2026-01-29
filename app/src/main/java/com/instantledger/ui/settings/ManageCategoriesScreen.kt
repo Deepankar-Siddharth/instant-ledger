@@ -21,30 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.instantledger.data.preferences.CategoryIcons
 import com.instantledger.data.preferences.CategoryManager
 import com.instantledger.data.preferences.CategoryMetadata
-
-private fun getEmojiForIconName(iconName: String): String {
-    return when (iconName.lowercase()) {
-        "home" -> "🏠"
-        "work" -> "💼"
-        "shoppingcart" -> "🛒"
-        "restaurant" -> "🍔"
-        "localgasstation" -> "⛽"
-        "directionscar" -> "🚗"
-        "localhospital" -> "🏥"
-        "school" -> "🏫"
-        "sportsesports" -> "🎮"
-        "flight" -> "✈️"
-        "hotel" -> "🏨"
-        "attachmoney" -> "💰"
-        "accountbalance" -> "🏦"
-        "creditcard" -> "💳"
-        "savings" -> "💵"
-        "receipt" -> "🧾"
-        else -> "📦"
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -194,7 +173,8 @@ private fun CategoryItem(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val displayIcon = categoryMetadata.getDisplayIcon()
+    val iconKey = categoryMetadata.getResolvedIconKey()
+    val iconVector = CategoryIcons.getImageVector(iconKey)
     val categoryColor = categoryMetadata.color?.let { Color(it) } 
         ?: MaterialTheme.colorScheme.primary
     
@@ -219,7 +199,6 @@ private fun CategoryItem(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Icon/Emoji Display
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -229,20 +208,12 @@ private fun CategoryItem(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (categoryMetadata.isEmoji) {
-                        Text(
-                            text = displayIcon,
-                            style = MaterialTheme.typography.headlineSmall
-                        )
-                    } else {
-                        // For Material icons, show emoji representation
-                        // The actual icon is stored and will be used in transaction cards
-                        val iconEmoji = getEmojiForIconName(categoryMetadata.icon ?: "")
-                        Text(
-                            text = iconEmoji,
-                            style = MaterialTheme.typography.headlineSmall
-                        )
-                    }
+                    Icon(
+                        imageVector = iconVector,
+                        contentDescription = categoryMetadata.name,
+                        modifier = Modifier.size(24.dp),
+                        tint = categoryColor
+                    )
                 }
                 
                 Column {

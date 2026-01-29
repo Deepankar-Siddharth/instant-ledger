@@ -70,7 +70,7 @@ class CategoryManager(context: Context) {
     
     fun getAllCategories(): List<String> = getCategories()
     
-    // Category Metadata Methods
+    // Category Metadata Methods (v1.1: iconKey only; legacy icon/isEmoji migrated on read)
     fun getCategoryMetadata(categoryName: String): CategoryMetadata {
         val metadataJson = prefs.getString(KEY_CATEGORY_METADATA, null)
         if (metadataJson != null) {
@@ -78,12 +78,18 @@ class CategoryManager(context: Context) {
                 val json = JSONObject(metadataJson)
                 val categoryJson = json.optJSONObject(categoryName)
                 if (categoryJson != null) {
-                    return CategoryMetadata(
-                        name = categoryName,
-                        icon = categoryJson.optString("icon", null).takeIf { it.isNotBlank() },
-                        isEmoji = categoryJson.optBoolean("isEmoji", false),
-                        color = categoryJson.optLong("color", -1).takeIf { it != -1L }
-                    )
+                    val color = categoryJson.optLong("color", -1).takeIf { it != -1L }
+                    val iconKey = categoryJson.optString("iconKey", null).takeIf { it.isNotBlank() }
+                    if (CategoryIcons.isValidIconKey(iconKey)) {
+                        return CategoryMetadata(name = categoryName, iconKey = iconKey!!, color = color)
+                    }
+                    // Legacy: migrate icon + isEmoji to iconKey
+                    val legacyIcon = categoryJson.optString("icon", null).takeIf { it.isNotBlank() }
+                    val wasEmoji = categoryJson.optBoolean("isEmoji", false)
+                    val migratedKey = CategoryIcons.migrateToIconKey(legacyIcon, wasEmoji)
+                    val migrated = CategoryMetadata(name = categoryName, iconKey = migratedKey, color = color)
+                    saveCategoryMetadata(migrated) // Persist migrated format
+                    return migrated
                 }
             } catch (e: Exception) {
                 // Fall through to default
@@ -109,10 +115,7 @@ class CategoryManager(context: Context) {
         }
         
         val categoryJson = JSONObject().apply {
-            if (metadata.icon != null) {
-                put("icon", metadata.icon)
-            }
-            put("isEmoji", metadata.isEmoji)
+            put("iconKey", metadata.getResolvedIconKey())
             if (metadata.color != null) {
                 put("color", metadata.color)
             }

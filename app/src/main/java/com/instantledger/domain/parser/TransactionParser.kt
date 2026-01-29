@@ -6,36 +6,56 @@ import java.security.MessageDigest
 class TransactionParser(
     private val smsParser: SMSParser
 ) {
-    
+
+    companion object {
+        /** Normalize SMS text for consistent hashing (multipart, trim, whitespace). */
+        fun normalizeForHash(text: String): String {
+            return text.trim()
+                .replace(Regex("\\s+"), " ")
+                .replace(Regex("[\r\n]+"), " ")
+        }
+
+        /** Compute duplicate-check hash from normalized text. */
+        fun hashForDuplicateCheck(normalizedText: String): String {
+            if (normalizedText.isBlank()) return ""
+            val digest = MessageDigest.getInstance("SHA-256")
+            val hashBytes = digest.digest(normalizedText.toByteArray())
+            return hashBytes.joinToString("") { "%02x".format(it) }
+        }
+    }
+
     fun parseSMSMessage(
         messageBody: String,
         timestamp: Long
     ): Transaction? {
-        val parsed = smsParser.parseSMS(messageBody)
-        
-        // Validate that we have minimum required data
-        if (parsed.amount == null || parsed.confidenceScore < 0.4f) {
+        if (messageBody.isBlank()) return null
+        if (timestamp <= 0L) return null
+
+        // Validation gate: must imply money movement; exclude OTP, balance-only, failed, promo
+        if (!SMSValidationGate.shouldAcceptAsTransaction(messageBody)) return null
+
+        val parsed = try {
+            smsParser.parseSMS(messageBody)
+        } catch (e: Exception) {
             return null
         }
-        
-        // Generate hash for duplicate detection
-        val hash = generateHash(messageBody)
-        
-        // Normalize merchant name
-        val merchant = parsed.merchant?.trim() ?: "Unknown"
-        
-        // Default values
+
+        if (parsed.amount == null || !parsed.amount.isFinite() || parsed.amount <= 0) return null
+        if (parsed.confidenceScore < 0.4f) return null
+
+        val normalizedBody = normalizeForHash(messageBody)
+        val hash = hashForDuplicateCheck(normalizedBody)
+        val merchant = parsed.merchant?.trim()?.takeIf { it.isNotBlank() } ?: "Unknown"
         val transactionType = parsed.transactionType ?: TransactionType.DEBIT
         val paymentMode = parsed.paymentMode ?: PaymentMode.UPI
-        
         val now = System.currentTimeMillis()
-        
+
         return Transaction(
             id = 0,
             timestamp = timestamp,
             amount = parsed.amount,
             merchant = merchant,
-            category = null, // Will be set by user classification
+            category = null,
             accountType = parsed.accountType,
             transactionType = transactionType,
             paymentMode = paymentMode,
@@ -46,10 +66,10 @@ class TransactionParser(
             isRecurring = false,
             projectId = null,
             notes = null,
-            status = TransactionStatus.DETECTED, // Auto-captured transactions start as DETECTED
+            status = TransactionStatus.DETECTED,
             createdAt = now,
             updatedAt = now,
-            isApproved = false // Auto-captured transactions require approval
+            isApproved = false
         )
     }
     
@@ -85,9 +105,4 @@ class TransactionParser(
         )
     }
     
-    private fun generateHash(text: String): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        val hashBytes = digest.digest(text.toByteArray())
-        return hashBytes.joinToString("") { "%02x".format(it) }
-    }
 }

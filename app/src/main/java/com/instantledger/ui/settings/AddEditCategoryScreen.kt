@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.instantledger.data.preferences.CategoryIcons
 import com.instantledger.data.preferences.CategoryMetadata
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,31 +36,11 @@ fun AddEditCategoryScreen(
     val isEditing = categoryMetadata != null
     
     var categoryName by remember { mutableStateOf(categoryMetadata?.name ?: "") }
-    var selectedIcon by remember { mutableStateOf<String?>(categoryMetadata?.icon) }
-    var isEmojiSelected by remember { mutableStateOf(categoryMetadata?.isEmoji ?: false) }
+    var selectedIconKey by remember { mutableStateOf(categoryMetadata?.getResolvedIconKey() ?: CategoryIcons.DEFAULT_ICON_KEY) }
     var selectedColor by remember { mutableStateOf<Long?>(categoryMetadata?.color) }
-    var showEmojiInput by remember { mutableStateOf(false) }
-    var emojiInput by remember { mutableStateOf("") }
     
-    // Predefined Material icons (finance-safe)
-    val materialIcons = listOf(
-        "Home" to Icons.Default.Home,
-        "Work" to Icons.Default.Work,
-        "ShoppingCart" to Icons.Default.ShoppingCart,
-        "Restaurant" to Icons.Default.Restaurant,
-        "LocalGasStation" to Icons.Default.LocalGasStation,
-        "DirectionsCar" to Icons.Default.DirectionsCar,
-        "LocalHospital" to Icons.Default.LocalHospital,
-        "School" to Icons.Default.School,
-        "SportsEsports" to Icons.Default.SportsEsports,
-        "Flight" to Icons.Default.Flight,
-        "Hotel" to Icons.Default.Hotel,
-        "AttachMoney" to Icons.Default.AttachMoney,
-        "AccountBalance" to Icons.Default.AccountBalance,
-        "CreditCard" to Icons.Default.CreditCard,
-        "Savings" to Icons.Default.Savings,
-        "Receipt" to Icons.Default.Receipt
-    )
+    // Predefined icon set (bundled only; no custom emoji)
+    val predefinedIconKeys = CategoryIcons.ALL_ICON_KEYS
     
     // Material 3 soft colors
     val materialColors = listOf(
@@ -79,7 +60,7 @@ fun AddEditCategoryScreen(
         Color(0xFF8C5000) to "Amber"
     )
     
-    val isValid = categoryName.isNotBlank() && selectedIcon != null
+    val isValid = categoryName.isNotBlank()
     
     Column(
         modifier = modifier
@@ -131,9 +112,8 @@ fun AddEditCategoryScreen(
                 fontWeight = FontWeight.Medium
             )
             
-            // Material Icons Grid
             Text(
-                text = "Icons",
+                text = "Choose a predefined icon",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -143,10 +123,11 @@ fun AddEditCategoryScreen(
                 columns = GridCells.Fixed(4),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.height(200.dp)
+                modifier = Modifier.height(220.dp)
             ) {
-                items(materialIcons) { (iconName, iconVector) ->
-                    val isSelected = !isEmojiSelected && selectedIcon == iconName
+                items(predefinedIconKeys) { iconKey ->
+                    val isSelected = selectedIconKey == iconKey
+                    val iconVector = CategoryIcons.getImageVector(iconKey)
                     Box(
                         modifier = Modifier
                             .aspectRatio(1f)
@@ -163,72 +144,18 @@ fun AddEditCategoryScreen(
                                 color = MaterialTheme.colorScheme.primary,
                                 shape = RoundedCornerShape(12.dp)
                             )
-                            .clickable {
-                                selectedIcon = iconName
-                                isEmojiSelected = false
-                                showEmojiInput = false
-                            },
+                            .clickable { selectedIconKey = iconKey },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = iconVector,
-                            contentDescription = iconName,
+                            contentDescription = iconKey,
                             modifier = Modifier.size(24.dp),
                             tint = if (isSelected) {
                                 MaterialTheme.colorScheme.onPrimaryContainer
                             } else {
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             }
-                        )
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Emoji Option
-            OutlinedButton(
-                onClick = { showEmojiInput = !showEmojiInput },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Use Custom Emoji")
-            }
-            
-            if (showEmojiInput) {
-                OutlinedTextField(
-                    value = emojiInput,
-                    onValueChange = { 
-                        emojiInput = it.take(1) // Only allow single character
-                        if (emojiInput.isNotBlank()) {
-                            selectedIcon = emojiInput
-                            isEmojiSelected = true
-                        }
-                    },
-                    label = { Text("Emoji") },
-                    placeholder = { Text("Enter a single emoji") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    supportingText = {
-                        Text(
-                            text = "Enter a single emoji character",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                )
-                
-                if (isEmojiSelected && selectedIcon != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = selectedIcon!!,
-                            style = MaterialTheme.typography.headlineMedium
                         )
                     }
                 }
@@ -323,8 +250,7 @@ fun AddEditCategoryScreen(
             
             TransactionCardPreview(
                 categoryName = categoryName.ifBlank { "Category Name" },
-                icon = selectedIcon ?: "📦",
-                isEmoji = isEmojiSelected,
+                iconKey = selectedIconKey,
                 color = selectedColor?.let { Color(it) }
             )
             
@@ -355,8 +281,7 @@ fun AddEditCategoryScreen(
                     onClick = {
                         val metadata = CategoryMetadata(
                             name = categoryName.trim(),
-                            icon = selectedIcon,
-                            isEmoji = isEmojiSelected,
+                            iconKey = selectedIconKey,
                             color = selectedColor
                         )
                         onSave(metadata)
@@ -374,11 +299,11 @@ fun AddEditCategoryScreen(
 @Composable
 private fun TransactionCardPreview(
     categoryName: String,
-    icon: String,
-    isEmoji: Boolean,
+    iconKey: String,
     color: Color?
 ) {
     val previewColor = color ?: MaterialTheme.colorScheme.primary
+    val iconVector = CategoryIcons.getImageVector(iconKey)
     
     Card(
         modifier = Modifier
@@ -401,7 +326,6 @@ private fun TransactionCardPreview(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Category Icon
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -411,20 +335,12 @@ private fun TransactionCardPreview(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                if (isEmoji) {
-                    Text(
-                        text = icon,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                } else {
-                    // For preview, show a generic icon
-                    Icon(
-                        imageVector = Icons.Default.Category,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = previewColor
-                    )
-                }
+                Icon(
+                    imageVector = iconVector,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    tint = previewColor
+                )
             }
             
             Spacer(modifier = Modifier.width(12.dp))

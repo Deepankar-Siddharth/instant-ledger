@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import com.instantledger.ui.dashboard.DashboardScreen
 import com.instantledger.data.model.Transaction
 import com.instantledger.data.preferences.CategoryManager
+import com.instantledger.data.preferences.IgnoredHashesStore
 import com.instantledger.data.repository.TransactionRepository
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.flow.first
@@ -241,10 +242,11 @@ fun MainScreen(
                         }
                     },
                     onIgnorePending = { tx ->
-                        if (transactionRepository != null) {
-                            uiScope.launch(Dispatchers.IO) {
-                                transactionRepository.deleteTransaction(tx)
+                        uiScope.launch(Dispatchers.IO) {
+                            tx.rawTextHash?.let { hash ->
+                                IgnoredHashesStore(context.applicationContext).add(hash)
                             }
+                            transactionRepository?.deleteTransaction(tx)
                         }
                     },
                     onTransactionClick = { transaction ->
