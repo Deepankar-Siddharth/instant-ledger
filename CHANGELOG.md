@@ -5,6 +5,22 @@ All notable changes to Instant Ledger will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-01-29
+
+### Fixed
+- **SMS validation:** Balance-only alerts (e.g. "Avl Bal: Rs X" with no transaction) are now explicitly rejected so they are not saved as transactions. Real transactions that mention balance (e.g. "Rs 500 debited. Avl Bal: Rs 45,000") are still accepted.
+- **Failed/reversed:** Messages indicating failed, declined, or reversed transactions are rejected and not saved.
+- **Notification deep-link:** Opening the app from a pending-transaction notification now consumes the intent extra so the app does not re-open to the pending section on every recomposition or config change.
+
+### Changed
+- **SMS validation gate:** Statement alerts (e.g. "statement generated", "monthly statement") are explicitly excluded. Credit limit and spend/usage alerts remain excluded.
+- **Acceptance rule:** Balance-only messages are rejected only when they do not contain a strong transaction verb (credited, debited, paid, etc.), avoiding false rejection of real transactions that mention balance.
+
+### Technical
+- No database schema changes. No new permissions. Package name unchanged. Focus on correctness and determinism; no auto-approval; no silent discard of valid money movement.
+
+---
+
 ## [0.2.0] - 2025-01-29
 
 ### Fixed

@@ -128,6 +128,16 @@ All permissions are requested only when needed. You can use the app in manual-en
 - Settings Hub
 -->
 
+## Release History
+
+| Version | Date       | Summary |
+|---------|------------|---------|
+| **0.3.0** | 2025-01-29 | Hardening release: stricter SMS validation (balance-only, statement, failed/reversed explicitly rejected); notification deep-link intent consumed once; no schema or permission changes. |
+| 0.2.0   | 2025-01-29 | Stability & UX: WorkManager-based SMS handling, no overlay, filter UI fix, category predefined icons, verb + rail validation. |
+| 0.1.0   | 2024-01-XX | Initial release: SMS capture, manual entry, categories, merchants, backup, encryption. |
+
+See [CHANGELOG.md](CHANGELOG.md) for full details.
+
 ## Building Locally
 
 ### Prerequisites

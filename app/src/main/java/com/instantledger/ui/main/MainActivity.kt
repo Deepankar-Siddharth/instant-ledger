@@ -60,6 +60,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // Consume notification deep-link once so recomposition doesn't re-apply
+        val openPendingFromIntent = intent?.getBooleanExtra(
+            com.instantledger.notification.TransactionNotificationManager.EXTRA_OPEN_PENDING,
+            false
+        ) ?: false
+        intent?.removeExtra(com.instantledger.notification.TransactionNotificationManager.EXTRA_OPEN_PENDING)
+        
         // Inject dependencies (Hilt will handle this)
         biometricManager = BiometricManager(this)
         
@@ -230,12 +237,6 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    // Check if we should open to pending section (from notification)
-                    val openPending = intent?.getBooleanExtra(
-                        com.instantledger.notification.TransactionNotificationManager.EXTRA_OPEN_PENDING,
-                        false
-                    ) ?: false
-                    
                     AppNavHost(
                         navController = navController,
                         transactions = transactions,
@@ -251,7 +252,7 @@ class MainActivity : ComponentActivity() {
                         transactionRepository = viewModel.transactionRepository,
                         settingsPreferences = settingsPreferences,
                         viewModel = viewModel,
-                        openPendingSection = openPending
+                        openPendingSection = openPendingFromIntent
                     )
                 }
             }
