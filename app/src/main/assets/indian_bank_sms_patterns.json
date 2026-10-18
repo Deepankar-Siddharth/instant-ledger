@@ -1,0 +1,448 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-01-27",
+  "banks": {
+    "SBI": {
+      "name": "State Bank of India",
+      "senderIds": [
+        "SBIIN",
+        "SBICRD",
+        "SBIDEB",
+        "SBI",
+        "VK-SBIIN",
+        "VM-SBIIN"
+      ],
+      "debitKeywords": [
+        "debited",
+        "spent",
+        "withdrawn",
+        "deducted",
+        "paid",
+        "charged"
+      ],
+      "creditKeywords": [
+        "credited",
+        "received",
+        "deposited",
+        "refunded",
+        "reversed"
+      ],
+      "upiKeywords": [
+        "upi",
+        "upi/",
+        "upi payment"
+      ],
+      "sampleMessages": [
+        "SBI: Rs.500.00 debited from A/c XX1234 on 27-Jan-24. UPI/PAYTM/123456789012. Avl Bal:Rs.45,000.00",
+        "SBI: Rs.1,250.00 credited to A/c XX1234 on 27-Jan-24 by NEFT. Avl Bal:Rs.46,250.00",
+        "SBI: Rs.299.00 debited from A/c XX1234 on 27-Jan-24. UPI/AMAZON/987654321098. Avl Bal:Rs.45,701.00",
+        "SBI: Rs.50,000.00 credited to A/c XX1234 on 27-Jan-24 by IMPS. Avl Bal:Rs.95,701.00"
+      ],
+      "amountPatterns": [
+        "Rs\\.([\\d,]+(?:\\.[\\d]{2})?)",
+        "INR\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+        "₹([\\d,]+(?:\\.[\\d]{2})?)"
+      ],
+      "accountPatterns": [
+        "A/c\\s*XX?([\\d]+)",
+        "A/c\\s*\\*([\\d]+)",
+        "Account\\s*([\\d]+)"
+      ]
+    },
+    "HDFC": {
+      "name": "HDFC Bank",
+      "senderIds": [
+        "HDFCBK",
+        "HDFCBANK",
+        "HDFC",
+        "VK-HDFCBK",
+        "VM-HDFCBK"
+      ],
+      "debitKeywords": [
+        "debited",
+        "spent",
+        "withdrawn",
+        "deducted",
+        "paid",
+        "charged"
+      ],
+      "creditKeywords": [
+        "credited",
+        "received",
+        "deposited",
+        "refunded",
+        "reversed"
+      ],
+      "upiKeywords": [
+        "upi",
+        "upi/",
+        "upi payment",
+        "gpay",
+        "phonepe"
+      ],
+      "sampleMessages": [
+        "HDFC Bank: Rs.1,000.00 debited from A/c **1234 on 27-Jan-24. UPI/GOOGLEPAY/123456789012. Avl Bal Rs.49,000.00",
+        "HDFC Bank: Rs.2,500.00 credited to A/c **1234 on 27-Jan-24 by NEFT. Avl Bal Rs.51,500.00",
+        "HDFC Bank: Rs.499.00 debited from A/c **1234 on 27-Jan-24. UPI/PHONEPE/987654321098. Avl Bal Rs.51,001.00",
+        "HDFC Bank: Rs.5,000.00 credited to A/c **1234 on 27-Jan-24 by IMPS. Avl Bal Rs.56,001.00"
+      ],
+      "amountPatterns": [
+        "Rs\\.([\\d,]+(?:\\.[\\d]{2})?)",
+        "INR\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+        "₹([\\d,]+(?:\\.[\\d]{2})?)"
+      ],
+      "accountPatterns": [
+        "A/c\\s*\\*\\*([\\d]+)",
+        "A/c\\s*XX?([\\d]+)",
+        "Account\\s*([\\d]+)"
+      ]
+    },
+    "ICICI": {
+      "name": "ICICI Bank",
+      "senderIds": [
+        "ICICIB",
+        "ICICIBK",
+        "ICICI",
+        "VK-ICICIB",
+        "VM-ICICIB"
+      ],
+      "debitKeywords": [
+        "debited",
+        "spent",
+        "withdrawn",
+        "deducted",
+        "paid",
+        "charged"
+      ],
+      "creditKeywords": [
+        "credited",
+        "received",
+        "deposited",
+        "refunded",
+        "reversed"
+      ],
+      "upiKeywords": [
+        "upi",
+        "upi/",
+        "upi payment",
+        "gpay",
+        "phonepe",
+        "paytm"
+      ],
+      "sampleMessages": [
+        "ICICI Bank: Rs.750.00 debited from A/c 1234 on 27-Jan-24. UPI/PAYTM/123456789012. Avl Bal:Rs.44,250.00",
+        "ICICI Bank: Rs.3,000.00 credited to A/c 1234 on 27-Jan-24 by NEFT. Avl Bal:Rs.47,250.00",
+        "ICICI Bank: Rs.199.00 debited from A/c 1234 on 27-Jan-24. UPI/GOOGLEPAY/987654321098. Avl Bal:Rs.47,051.00",
+        "ICICI Bank: Rs.10,000.00 credited to A/c 1234 on 27-Jan-24 by IMPS. Avl Bal:Rs.57,051.00"
+      ],
+      "amountPatterns": [
+        "Rs\\.([\\d,]+(?:\\.[\\d]{2})?)",
+        "INR\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+        "₹([\\d,]+(?:\\.[\\d]{2})?)"
+      ],
+      "accountPatterns": [
+        "A/c\\s*([\\d]+)",
+        "Account\\s*([\\d]+)",
+        "A/c\\s*XX?([\\d]+)"
+      ]
+    },
+    "AXIS": {
+      "name": "Axis Bank",
+      "senderIds": [
+        "AXISBK",
+        "AXISBANK",
+        "AXIS",
+        "VK-AXISBK",
+        "VM-AXISBK"
+      ],
+      "debitKeywords": [
+        "debited",
+        "spent",
+        "withdrawn",
+        "deducted",
+        "paid",
+        "charged"
+      ],
+      "creditKeywords": [
+        "credited",
+        "received",
+        "deposited",
+        "refunded",
+        "reversed"
+      ],
+      "upiKeywords": [
+        "upi",
+        "upi/",
+        "upi payment",
+        "gpay",
+        "phonepe",
+        "paytm"
+      ],
+      "sampleMessages": [
+        "Axis Bank: Rs.1,500.00 debited from A/c *1234 on 27-Jan-24. UPI/PAYTM/123456789012. Avl Bal:Rs.48,500.00",
+        "Axis Bank: Rs.4,000.00 credited to A/c *1234 on 27-Jan-24 by NEFT. Avl Bal:Rs.52,500.00",
+        "Axis Bank: Rs.299.00 debited from A/c *1234 on 27-Jan-24. UPI/GOOGLEPAY/987654321098. Avl Bal:Rs.52,201.00",
+        "Axis Bank: Rs.15,000.00 credited to A/c *1234 on 27-Jan-24 by IMPS. Avl Bal:Rs.67,201.00"
+      ],
+      "amountPatterns": [
+        "Rs\\.([\\d,]+(?:\\.[\\d]{2})?)",
+        "INR\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+        "₹([\\d,]+(?:\\.[\\d]{2})?)"
+      ],
+      "accountPatterns": [
+        "A/c\\s*\\*([\\d]+)",
+        "A/c\\s*XX?([\\d]+)",
+        "Account\\s*([\\d]+)"
+      ]
+    },
+    "KOTAK": {
+      "name": "Kotak Mahindra Bank",
+      "senderIds": [
+        "KOTAKB",
+        "KOTAKBK",
+        "KOTAK",
+        "VK-KOTAKB",
+        "VM-KOTAKB"
+      ],
+      "debitKeywords": [
+        "debited",
+        "spent",
+        "withdrawn",
+        "deducted",
+        "paid",
+        "charged"
+      ],
+      "creditKeywords": [
+        "credited",
+        "received",
+        "deposited",
+        "refunded",
+        "reversed"
+      ],
+      "upiKeywords": [
+        "upi",
+        "upi/",
+        "upi payment",
+        "gpay",
+        "phonepe",
+        "paytm"
+      ],
+      "sampleMessages": [
+        "Kotak: Rs.800.00 debited from A/c XX1234 on 27-Jan-24. UPI/PAYTM/123456789012. Avl Bal:Rs.49,200.00",
+        "Kotak: Rs.2,000.00 credited to A/c XX1234 on 27-Jan-24 by NEFT. Avl Bal:Rs.51,200.00",
+        "Kotak: Rs.149.00 debited from A/c XX1234 on 27-Jan-24. UPI/GOOGLEPAY/987654321098. Avl Bal:Rs.51,051.00",
+        "Kotak: Rs.8,000.00 credited to A/c XX1234 on 27-Jan-24 by IMPS. Avl Bal:Rs.59,051.00"
+      ],
+      "amountPatterns": [
+        "Rs\\.([\\d,]+(?:\\.[\\d]{2})?)",
+        "INR\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+        "₹([\\d,]+(?:\\.[\\d]{2})?)"
+      ],
+      "accountPatterns": [
+        "A/c\\s*XX?([\\d]+)",
+        "A/c\\s*\\*([\\d]+)",
+        "Account\\s*([\\d]+)"
+      ]
+    },
+    "PNB": {
+      "name": "Punjab National Bank",
+      "senderIds": [
+        "PNB",
+        "PNBIN",
+        "VK-PNB",
+        "VM-PNB"
+      ],
+      "debitKeywords": [
+        "debited",
+        "spent",
+        "withdrawn",
+        "deducted",
+        "paid",
+        "charged"
+      ],
+      "creditKeywords": [
+        "credited",
+        "received",
+        "deposited",
+        "refunded",
+        "reversed"
+      ],
+      "upiKeywords": [
+        "upi",
+        "upi/",
+        "upi payment",
+        "gpay",
+        "phonepe",
+        "paytm"
+      ],
+      "sampleMessages": [
+        "PNB: Rs.600.00 debited from A/c 1234 on 27-Jan-24. UPI/PAYTM/123456789012. Avl Bal:Rs.49,400.00",
+        "PNB: Rs.1,500.00 credited to A/c 1234 on 27-Jan-24 by NEFT. Avl Bal:Rs.50,900.00",
+        "PNB: Rs.99.00 debited from A/c 1234 on 27-Jan-24. UPI/GOOGLEPAY/987654321098. Avl Bal:Rs.50,801.00",
+        "PNB: Rs.5,000.00 credited to A/c 1234 on 27-Jan-24 by IMPS. Avl Bal:Rs.55,801.00"
+      ],
+      "amountPatterns": [
+        "Rs\\.([\\d,]+(?:\\.[\\d]{2})?)",
+        "INR\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+        "₹([\\d,]+(?:\\.[\\d]{2})?)"
+      ],
+      "accountPatterns": [
+        "A/c\\s*([\\d]+)",
+        "Account\\s*([\\d]+)",
+        "A/c\\s*XX?([\\d]+)"
+      ]
+    },
+    "BOI": {
+      "name": "Bank of India",
+      "senderIds": [
+        "BOI",
+        "BOIIN",
+        "VK-BOI",
+        "VM-BOI"
+      ],
+      "debitKeywords": [
+        "debited",
+        "spent",
+        "withdrawn",
+        "deducted",
+        "paid",
+        "charged"
+      ],
+      "creditKeywords": [
+        "credited",
+        "received",
+        "deposited",
+        "refunded",
+        "reversed"
+      ],
+      "upiKeywords": [
+        "upi",
+        "upi/",
+        "upi payment",
+        "gpay",
+        "phonepe",
+        "paytm"
+      ],
+      "sampleMessages": [
+        "BOI: Rs.700.00 debited from A/c 1234 on 27-Jan-24. UPI/PAYTM/123456789012. Avl Bal:Rs.49,300.00",
+        "BOI: Rs.2,500.00 credited to A/c 1234 on 27-Jan-24 by NEFT. Avl Bal:Rs.51,800.00",
+        "BOI: Rs.199.00 debited from A/c 1234 on 27-Jan-24. UPI/GOOGLEPAY/987654321098. Avl Bal:Rs.51,601.00",
+        "BOI: Rs.7,000.00 credited to A/c 1234 on 27-Jan-24 by IMPS. Avl Bal:Rs.58,601.00"
+      ],
+      "amountPatterns": [
+        "Rs\\.([\\d,]+(?:\\.[\\d]{2})?)",
+        "INR\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+        "₹([\\d,]+(?:\\.[\\d]{2})?)"
+      ],
+      "accountPatterns": [
+        "A/c\\s*([\\d]+)",
+        "Account\\s*([\\d]+)",
+        "A/c\\s*XX?([\\d]+)"
+      ]
+    }
+  },
+  "commonPatterns": {
+    "debitKeywords": [
+      "debited",
+      "spent",
+      "withdrawn",
+      "deducted",
+      "paid",
+      "charged",
+      "debit",
+      "withdrawal",
+      "payment"
+    ],
+    "creditKeywords": [
+      "credited",
+      "received",
+      "deposited",
+      "refunded",
+      "reversed",
+      "credit",
+      "deposit",
+      "refund",
+      "reversal"
+    ],
+    "upiKeywords": [
+      "upi",
+      "upi/",
+      "upi payment",
+      "gpay",
+      "google pay",
+      "phonepe",
+      "paytm",
+      "bhim",
+      "bhim upi",
+      "unified payments interface"
+    ],
+    "cardKeywords": [
+      "card",
+      "visa",
+      "mastercard",
+      "rupay",
+      "debit card",
+      "credit card",
+      "card payment",
+      "card transaction"
+    ],
+    "bankTransferKeywords": [
+      "neft",
+      "imps",
+      "rtgs",
+      "transfer",
+      "bank transfer",
+      "fund transfer",
+      "online transfer"
+    ],
+    "merchantPatterns": [
+      "at\\s+([A-Z][A-Z\\s&]+)",
+      "from\\s+([A-Z][A-Z\\s&]+)",
+      "to\\s+([A-Z][A-Z\\s&]+)",
+      "via\\s+([A-Z][A-Z\\s&]+)",
+      "UPI/([A-Z][A-Z\\s&]+)",
+      "merchant:\\s*([A-Z][A-Z\\s&]+)",
+      "vendor:\\s*([A-Z][A-Z\\s&]+)"
+    ],
+    "amountPatterns": [
+      "Rs\\.?\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+      "INR\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+      "₹\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+      "([\\d,]+(?:\\.[\\d]{2})?)\\s*Rs\\.?",
+      "([\\d,]+(?:\\.[\\d]{2})?)\\s*INR",
+      "([\\d,]+(?:\\.[\\d]{2})?)\\s*₹"
+    ],
+    "accountPatterns": [
+      "A/c\\s*XX?([\\d]+)",
+      "A/c\\s*\\*+([\\d]+)",
+      "Account\\s*([\\d]+)",
+      "A/c\\s*([\\d]+)",
+      "Acc\\s*([\\d]+)"
+    ],
+    "balancePatterns": [
+      "Avl\\s*Bal[^:]*:?\\s*Rs\\.?\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+      "Available\\s*Balance[^:]*:?\\s*Rs\\.?\\s*([\\d,]+(?:\\.[\\d]{2})?)",
+      "Balance[^:]*:?\\s*Rs\\.?\\s*([\\d,]+(?:\\.[\\d]{2})?)"
+    ],
+    "datePatterns": [
+      "on\\s+([\\d]{1,2}-[A-Za-z]{3}-[\\d]{2})",
+      "on\\s+([\\d]{1,2}/[\\d]{1,2}/[\\d]{2,4})",
+      "on\\s+([\\d]{1,2}\\.[\\d]{1,2}\\.[\\d]{2,4})",
+      "([\\d]{1,2}-[A-Za-z]{3}-[\\d]{2})",
+      "([\\d]{1,2}/[\\d]{1,2}/[\\d]{2,4})"
+    ]
+  },
+  "metadata": {
+    "description": "Indian Bank SMS Transaction Patterns for Android Finance Apps",
+    "usage": "Use this JSON to configure SMS parsing rules for Indian banking transactions",
+    "notes": [
+      "Sender IDs may vary by region and bank branch",
+      "Patterns are case-insensitive",
+      "Account numbers are typically masked (XX1234, **1234, *1234)",
+      "Amounts may include commas for thousands separator",
+      "Dates may vary in format (DD-MMM-YY, DD/MM/YYYY, etc.)",
+      "UPI transaction IDs are typically 12-digit numbers",
+      "Merchant names may be abbreviated or truncated in SMS"
+    ]
+  }
+}

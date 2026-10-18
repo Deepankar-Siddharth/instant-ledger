@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Exclude encrypted database from cloud backup -->
+        <exclude domain="database" path="instant_ledger.db" />
+        <exclude domain="database" path="instant_ledger.db-journal" />
+        <exclude domain="database" path="instant_ledger.db-wal" />
+        <exclude domain="database" path="instant_ledger.db-shm" />
+    </cloud-backup>
+</data-extraction-rules>
